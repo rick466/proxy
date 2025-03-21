@@ -9,9 +9,7 @@ const enableWorkers = os.cpus().length !== 1;
 module.exports = {
     //// HOSTING CONFIGURATION ////
 
-    bindingAddress: '127.0.0.1',
-    port: 8080,
-    crossDomainPort: 8081,
+    bindingAddress: '0.0.0.0'
     publicDir: path.join(__dirname, '../public'), // set to null to disable
 
     // enable or disable multithreading
