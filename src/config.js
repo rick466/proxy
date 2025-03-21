@@ -23,7 +23,12 @@ module.exports = {
     // this function's return object will determine how the client url rewriting will work.
     // set them differently from bindingAddress and port if rammerhead is being served
     // from a reverse proxy.
-    getServerInfo: () => ({ hostname: 'localhost', port: 8080, crossDomainPort: 8081, protocol: 'http:' }),
+    getServerInfo: () => ({
+        hostname: '0.0.0.0',
+        port: process.env.PORT || 8080, // Use Vercel's assigned port or fallback to 8080
+        crossDomainPort: process.env.PORT || 8080,
+        protocol: 'https:',  // Use 'https:' for Vercel deployment
+    }),
     // example of non-hard-coding the hostname header
     // getServerInfo: (req) => {
     //     return { hostname: new URL('http://' + req.headers.host).hostname, port: 443, crossDomainPort: 8443, protocol: 'https: };
@@ -41,7 +46,12 @@ module.exports = {
     // caching options for js rewrites. (disk caching not recommended for slow HDD disks)
     // recommended: 50mb for memory, 5gb for disk
     // jsCache: new RammerheadJSMemCache(5 * 1024 * 1024),
-    jsCache: new RammerheadJSFileCache(path.join(__dirname, '../cache-js'), 5 * 1024 * 1024 * 1024, 50000, enableWorkers),
+    jsCache: new RammerheadJSMemCache(5 * 1024 * 1024),  // 5 MB in-memory cache
+    fileCacheSessionConfig: {
+        saveDirectory: null,  // Disable file system saving
+        deleteCorruptedSessions: true,
+        deleteUnused: true
+    },
 
     // whether to disable http2 support or not (from proxy to destination site).
     // disabling may reduce number of errors/memory, but also risk
@@ -83,11 +93,11 @@ module.exports = {
     //// LOGGING CONFIGURATION ////
 
     // valid values: 'disabled', 'debug', 'traffic', 'info', 'warn', 'error'
-    logLevel: process.env.DEVELOPMENT ? 'debug' : 'info',
+    logLevel: 'warn',  // Less verbose logging
     generatePrefix: (level) => `[${new Date().toISOString()}] [${level.toUpperCase()}] `,
 
     // logger depends on this value
-    getIP: (req) => req.socket.remoteAddress
+    getIP: (req) => req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress
     // use the example below if rammerhead is sitting behind a reverse proxy like nginx
     // getIP: req => (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '').split(',')[0].trim()
 };
